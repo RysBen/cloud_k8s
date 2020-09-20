@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-oss
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: oss
+  flexVolume:
+    driver: "alicloud/oss"        # 
+    secretRef:                    # by secret
+      name: "oss-secret"
+    options:                      #
+      bucket: "genetron"
+      url: "oss-cn-beijing.aliyuncs.com"
+      otherOpts: "-o max_stat_cache_size=0 -o allow_other"
+      path: "/subpath"
+
+---------
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-oss
+spec:
+  storageClassName: oss
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+
+---------
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oss-static
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: pvc-oss
+            mountPath: "/data"
+        volumes:
+        - name: pvc-oss
+          persistentVolumeClaim:
+            claimName: pvc-oss
+            
+#使用OSS静态卷 https://help.aliyun.com/document_detail/130911.html?spm=5176.10695662.1996646101.searchclickresult.2df1435cZKiHQA
