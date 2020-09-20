@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: clean-nas-manually
+spec:
+  volumes:
+  - flexVolume:
+      options: {path: '/', server: '172a54b0ad-xos54.cn-beijing.nas.aliyuncs.com', vers: '3.0'}
+      driver: 'alicloud/nas'
+    name: 'genetron-nas'
+  containers:
+  - name: clean
+    image: registry-vpc.cn-beijing.aliyuncs.com/genetron/hand:latest
+    command: [bash, -c]
+    args: ["set -x && find /var/panel*/*W077212T* -maxdepth 0 -delete -print"]
+    volumeMounts:
+    - {mountPath: /var, name: 'genetron-nas'}
+  restartPolicy: OnFailure
+  
+#kubectl create -f clean_nas.yaml
+#kubectl get po clean-nas-manually
+#kubectl log clean-nas-manually
+#kubectl delete po clean-nas-manually
